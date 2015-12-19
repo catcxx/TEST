@@ -1,0 +1,96 @@
+package graph
+
+import org.apache.spark.graphx.{Graph, Edge, VertexId}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkContext, SparkConf}
+
+/**
+ * Created by hadoop on 12/3/15.
+ */
+object Relation {
+  val rootDir = "datas"
+  def main(args: Array[String]) {
+    val conf = new SparkConf().setAppName("Sparkinaction").setMaster("local")
+    val sc = new SparkContext(conf)
+    val userPhoneRS = sc.textFile(rootDir+"/user_phone.relationship")
+
+    //user
+    val users: RDD[(VertexId,(String))] =
+      userPhoneRS.map(_.split(",")(0)).distinct()
+    .map(userId => (userId.toLong,("TEST_USER")))
+
+    //phone
+    //phoneid = maxuserid + phoneid
+    val maxUserId = users.max()._1
+    val phones:RDD[(VertexId,(String))] =
+    userPhoneRS.map(_.split(",")(1)).distinct()
+    .map(phoneId =>(phoneId.toLong+maxUserId,("TEST_PHONE")))
+
+    //create vertices
+    val Vertices = users.union(phones)
+
+    //create edges
+    val edges : RDD[Edge[String]] = userPhoneRS.map{
+      line =>
+        val up = line.split(",")
+        Edge(up(0).toLong,up(1).toLong + maxUserId,"TEST_EDGE")
+    }
+
+    //create graph
+    val default = ("Missing")
+    val graph = Graph(Vertices,edges,default)
+    graph.vertices.collect().foreach(println)
+    graph.edges.collect().foreach(println)
+
+    /**  vertices
+     *  (4,TEST_USER)
+        (14,TEST_PHONE)
+        (6,TEST_USER)
+        (8,TEST_USER)
+        (12,TEST_PHONE)
+        (10,TEST_USER)
+        (2,TEST_USER)
+        (13,TEST_PHONE)
+        (11,TEST_USER)
+        (1,TEST_USER)
+        (3,TEST_USER)
+        (7,TEST_USER)
+        (9,TEST_USER)
+        (5,TEST_USER)
+     */
+
+    /** edges
+     *  Edge(1,12,TEST_EDGE)
+        Edge(2,12,TEST_EDGE)
+        Edge(3,12,TEST_EDGE)
+        Edge(4,12,TEST_EDGE)
+        Edge(4,13,TEST_EDGE)
+        Edge(5,12,TEST_EDGE)
+        Edge(6,13,TEST_EDGE)
+        Edge(7,13,TEST_EDGE)
+        Edge(8,13,TEST_EDGE)
+        Edge(9,14,TEST_EDGE)
+        Edge(10,14,TEST_EDGE)
+        Edge(11,14,TEST_EDGE)
+     */
+
+    //get connectedComponents
+    val graph2 = graph.connectedComponents()
+
+    //show
+    graph2.vertices.filter(_._1 <= maxUserId).collect().foreach(println)
+
+
+
+
+    //subgraph
+    val subgra = graph.subgraph(epred = (e => e.dstId == 14),
+      vpred = (id, attr) => attr == "TEST_PHONE")
+
+//    val subgra = graph.subgraph(epred = (e => e.srcId < 6),
+//      vpred = (id, attr) => attr == "TEST_PHONE")
+
+    subgra.vertices.collect().foreach(println(_))
+    subgra.edges.collect().foreach(println)
+    }
+}
