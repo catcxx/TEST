@@ -1,0 +1,26 @@
+//gps data sample 
+//1000,AT0001,2011-06-18 08:44:14,105.989689,35.256210,0,0,7
+
+
+
+val sc: SparkContext // An existing SparkContext.
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+
+import sqlContext.createSchemaRDD
+
+val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+
+import sqlContext.createSchemaRDD
+
+
+case class Gps( num: Int, carid: String,timestamp: String, lon: Double, lat: Double,speed: Int ,direction: Int ,state: Int)
+
+
+val gpsgps_sparksql = sc.textFile("/in/0618soaf").map(_.split(",")).map(p => Gps(p(0).toInt, p(1),p(2),p(3).toDouble,p(4).toDouble,p(5).toInt,p(6).toInt,p(7).toInt))
+gpsgps_sparksql.registerAsTable("gpsgps_sparksql")
+
+// SQL statements can be run by using the sql methods provided by sqlContext.
+val counts = sqlContext.sql("SELECT count(*) from gpsgps_sparksql")
+counts.collect
+
+//took 17.184648068 s
