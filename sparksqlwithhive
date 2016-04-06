@@ -1,0 +1,20 @@
+//gps data sample 
+//1000,AT0001,2011-06-18 08:44:14,105.989689,35.256210,0,0,7
+
+
+//gps
+
+val hiveContext = new org.apache.spark.sql.hive.HiveContext(sc)
+
+hiveContext.hql("CREATE TABLE IF NOT EXISTS gps ( num int, carid String,timestamp String, lon double, lat double,speed int ,direction int ,state int) ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE")
+
+hiveContext.hql("LOAD DATA INPATH '/in/0618soae' INTO TABLE gps")
+
+// Queries are expressed in HiveQL
+hiveContext.hql("FROM gps SELECT count(*) where state=7").collect()
+
+hiveContext.hql("show tables").collect().foreach(println)
+
+
+hiveContext.hql("select count(*),carid,speed from gps  group by carid,speed order by speed").collect.foreach(println)
+hiveContext.hql("select count(*),carid,speed from gps  group by carid,speed order by speed").saveAsTextFile('/out/spark/gps_sql_2016-4-6');
