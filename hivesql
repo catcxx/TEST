@@ -1,0 +1,174 @@
+
+//gps data sample 
+//1000,AT0001,2011-06-18 08:44:14,105.989689,35.256210,0,0,7
+
+
+
+CREATE TABLE IF NOT EXISTS gps ( num int, carid String,
+timestamp String, lon double, lat double,speed int ,direction int ,state int)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+LOAD DATA INPATH '/in/0618soad' OVERWRITE INTO TABLE gps;	#hdfs
+
+
+
+select * from gps;
+select * from gps where state=7;
+select count(*),carid,speed from gps  group by carid,speed order by speed;
+
+
+
+
+
+
+
+
+
+//th following for my test on hive sql
+
+
+1.start hadoop cluster     service mysql start 
+2.bin/hive	
+
+show databases;
+CREATE DATABASE IF NOT EXISTS userdb;
+use userdb;
+
+DROP DATABASE IF EXISTS userdb;
+
+
+/*
+******	table employee ****
+*/
+
+CREATE TABLE IF NOT EXISTS employee ( eid int, name String,
+salary String, destination String)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+
+LOAD DATA LOCAL INPATH '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/sample.txt' OVERWRITE INTO TABLE employee;
+desc employee;
+
+# load from hdfs
+CREATE TABLE IF NOT EXISTS employee2 ( eid int, name String,
+salary String, destination String)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+LOAD DATA INPATH '/user/hive/data/sample.txt' OVERWRITE INTO TABLE employee2;	#hdfs
+
+
+select * from employee;
+select * from employee where eid=1201;
+ SELECT * FROM employee WHERE Salary>=40000;
+ SELECT * FROM employee WHERE Salary>40000 && Dept=TP;
+SELECT * FROM employee ORDER BY salary;
+SELECT eid, name, salary FROM employee ORDER BY salary;
+SELECT salary,count(*) FROM employee GROUP BY salary;
+SELECT * FROM employee GROUP BY salary;
+
+CREATE VIEW emp_30000 AS
+SELECT * FROM employee
+WHERE salary>30000;
+
+DROP VIEW emp_30000;
+
+
+ALTER TABLE employee RENAME TO emp;
+ALTER TABLE emp CHANGE name ename String;
+ALTER TABLE emp ADD COLUMNS (dept STRING COMMENT 'Department name');
+
+ALTER TABLE employee REPLACE COLUMNS (empid Int,ename STRING);	#The following query deletes all the columns from the employee table and replaces it with emp and name columns:
+
+ALTER TABLE emp REPLACE COLUMNS (
+eid int id int,
+ename String name String,
+salary String salary String,
+destination String destination String);
+
+
+
+DROP TABLE IF EXISTS employee;
+
+
+
+
+
+/*
+******	table employee1 ****
+*/
+DROP TABLE IF EXISTS employee1;
+
+CREATE EXTERNAL TABLE employee1 (eid int, name String,salary String, destination String) PARTITIONED BY (part_salary String) ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/samplep1.txt' OVERWRITE INTO TABLE employee1 PARTITION (part_salary='45000');
+LOAD DATA LOCAL INPATH '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/samplep2.txt' OVERWRITE INTO TABLE employee1 PARTITION (part_salary='40000');
+
+ALTER TABLE employee1 ADD PARTITION (part_salary='30000') location '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/samplep3.txt';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+***	customersID | NAME     | AGE | ADDRESS   | SALARY
+*/
+
+CREATE EXTERNAL TABLE customers (id int, name String,age int, address String,salary String) ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/customers' OVERWRITE INTO TABLE customers;
+
+
+
+*****	OID  | DATE                | CUSTOMER_ID | AMOUNT |
+
+
+CREATE EXTERNAL TABLE orders (oid int, date String,customerid String,amount String) ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE;
+
+LOAD DATA LOCAL INPATH '/usr/hadoop2-2/hive/apache-hive-0.13.1-bin/examples/files/orders' OVERWRITE INTO TABLE orders;
+
+
+SELECT c.id, c.name, c.age, o.amount FROM customers c JOIN orders o ON (c.id = o.customerid);	#join
+SELECT c.id, c.name, o.amount, o.date FROM customers c LEFT OUTER JOIN orders o ON (c.id = o.customerid);	#LEFT OUTER JOIN
+SELECT c.id, c.name, o.amount, o.date FROM customers c RIGHT OUTER JOIN orders o ON (c.id = o.customerid);	#RIGHT OUTER JOIN
+SELECT c.id, c.name, o.amount, o.date FROM customers c FULL OUTER JOIN orders o ON (c.id = o.customerid);		#FULL OUTER JOIN
+
+
+#VIEW
+CREATE VIEW emp_30000 AS SELECT * FROM employee WHERE salary>30000;
+DROP VIEW emp_30000;
+
+#index
+CREATE INDEX inedx_salary ON TABLE employee(salary) AS 'org.apache.hadoop.hive.ql.index.compact.CompactIndexHandler';
+ DROP INDEX index_salary ON employee;
