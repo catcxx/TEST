@@ -1,0 +1,29 @@
+1.hadoop_shell
+
+hadoop fs -ls /in/logout/11
+bin/hadoop fs -count /in/ml-100k
+hadoop fs -rmr /in/logout/11
+hadoop fs -cat /gpsdata/test1
+
+
+
+
+2.basic linux shell
+
+uname -a  //x86_64 64bit;i386, i686 32bit
+less /proc/cpuinfo
+uptime
+history
+locate    //配合数据库查看文件位置 
+find /mnt *.java|grep java    find .|grep txt      find . -type f   // 实际搜寻硬盘查询文件名称
+whereis   //查看文件的位置
+which   // 查看可执行文件的位置 
+ls -sailr
+sed '/^$/d' file  //删除空白行
+:g/^$/d   or  :g/^\s*$/d    //vim中删除空行  (^ is start of line; \s* is zero or more whitespace characters; $ is end of line) 
+traceroute 127.0.0.1
+cmp
+diff
+head 2015-09-08.log |awk '{print $1}' |sort |uniq -c |sort -rn|more
+ps aux|grep hadoop
+history>cmdhistory.md
